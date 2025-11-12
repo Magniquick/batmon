@@ -1,0 +1,11 @@
+[package]
+name = "batwatch"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dbus = "0.9.9"
+dirs = "6.0.0"
+serde = { version = "1.0.228", features = ["derive"] }
+tempfile = "3.23.0"
+toml = "0.9.8"

@@ -1,0 +1,27 @@
+[advanced]
+poll_interval_secs = 5
+proxy_timeout_secs = 5
+
+[charging]
+script = "scripts/ppd-performance.sh"
+when = "once"
+
+[charging.full]
+script = "scripts/full.sh"
+when = 100
+
+[discharging]
+script = "scripts/ppd-balanced.sh"
+when = "once"
+
+[discharging.warn20]
+script = "scripts/warn-low.sh"
+when = 20
+
+[discharging.warn15]
+script = "scripts/warn-low.sh"
+when = 15
+
+[discharging.critical10]
+script = "scripts/critical-low.sh"
+when = 10
