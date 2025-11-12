@@ -289,23 +289,35 @@ fn is_elf(bytes: &[u8]) -> bool {
 
 #[derive(Clone)]
 pub struct ScriptResolver {
+    config_dir: Option<PathBuf>,
     config_scripts_dir: Option<PathBuf>,
 }
 
 impl ScriptResolver {
     pub fn new(config_dir: Option<PathBuf>) -> Self {
-        let config_scripts_dir = config_dir.map(|mut dir| {
-            dir.push("scripts");
-            dir
-        });
-        Self { config_scripts_dir }
+        let config_scripts_dir = config_dir.as_ref().map(|dir| dir.join("scripts"));
+        Self {
+            config_dir,
+            config_scripts_dir,
+        }
     }
 
     pub fn resolve(&self, command: &str) -> PathBuf {
         let candidate = PathBuf::from(command);
-        if candidate.is_absolute() || has_additional_components(&candidate) {
+        if candidate.is_absolute() {
             println!("BatWatch: using explicit script path {:?}", candidate);
             return candidate;
+        }
+
+        if let Some(dir) = &self.config_dir {
+            let config_relative = dir.join(&candidate);
+            if config_relative.exists() {
+                println!(
+                    "BatWatch: resolved script {:?} relative to config dir {:?}",
+                    command, dir
+                );
+                return config_relative;
+            }
         }
 
         if let Some(dir) = &self.config_scripts_dir {
@@ -332,10 +344,6 @@ impl ScriptResolver {
     }
 }
 
-fn has_additional_components(path: &Path) -> bool {
-    path.components().count() > 1
-}
-
 fn find_in_path(command: &str) -> Option<PathBuf> {
     let path_env = env::var_os("PATH")?;
     env::split_paths(&path_env)
@@ -352,6 +360,9 @@ fn find_in_path(command: &str) -> Option<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::path::Path;
+    use tempfile::tempdir;
 
     #[test]
     fn always_trigger_fires_for_every_update() {
@@ -371,5 +382,38 @@ mod tests {
         assert!(action.should_fire(&event, false));
         event.percentage = 49;
         assert!(action.should_fire(&event, true));
+    }
+
+    #[test]
+    fn resolves_relative_paths_against_config_dir() {
+        let temp = tempdir().unwrap();
+        let config_dir = temp.path().join("batwatch");
+        fs::create_dir_all(&config_dir).unwrap();
+        let script_path = config_dir.join("scripts").join("ppd-performance.sh");
+        write_dummy_script(&script_path);
+        let resolver = ScriptResolver::new(Some(config_dir));
+
+        let resolved = resolver.resolve("scripts/ppd-performance.sh");
+        assert_eq!(resolved, script_path);
+    }
+
+    #[test]
+    fn resolves_bare_names_under_scripts_dir() {
+        let temp = tempdir().unwrap();
+        let config_dir = temp.path().join("batwatch");
+        fs::create_dir_all(&config_dir).unwrap();
+        let script_path = config_dir.join("scripts").join("warn-low.sh");
+        write_dummy_script(&script_path);
+        let resolver = ScriptResolver::new(Some(config_dir));
+
+        let resolved = resolver.resolve("warn-low.sh");
+        assert_eq!(resolved, script_path);
+    }
+
+    fn write_dummy_script(path: &Path) {
+        if let Some(dir) = path.parent() {
+            fs::create_dir_all(dir).unwrap();
+        }
+        fs::write(path, b"#!/bin/sh\nexit 0\n").unwrap();
     }
 }
