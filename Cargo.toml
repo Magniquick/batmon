@@ -2,6 +2,11 @@
 name = "batwatch"
 version = "0.1.0"
 edition = "2024"
+description = "UPower battery monitor that runs configurable local hooks"
+readme = "README.md"
+license = "MIT"
+keywords = ["battery", "upower", "dbus", "linux"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 dbus = "0.9.10"

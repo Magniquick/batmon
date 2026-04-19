@@ -159,6 +159,26 @@ fn validate_script_errors_on_missing_path() {
     );
 }
 
+#[test]
+fn help_command_exits_without_monitoring() {
+    dispatch_args(["--help"]).expect("help should succeed");
+}
+
+#[test]
+fn default_config_command_exits_without_monitoring() {
+    dispatch_args(["--print-default-config"]).expect("default config should print");
+}
+
+#[test]
+fn unknown_argument_reports_error() {
+    let err = dispatch_args(["--bogus"]).expect_err("unknown arg should fail");
+    assert!(err.to_string().contains("unsupported argument"));
+}
+
+fn dispatch_args<const N: usize>(args: [&str; N]) -> Result<(), Box<dyn std::error::Error>> {
+    crate::dispatch(args.into_iter().map(String::from))
+}
+
 fn mark_executable(path: &std::path::Path) {
     #[cfg(unix)]
     {

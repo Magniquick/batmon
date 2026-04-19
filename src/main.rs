@@ -1,5 +1,6 @@
 mod actions;
 mod config;
+mod support_files;
 
 use actions::{ActionManager, BatteryState, ScriptResolver, StatusEvent};
 use dbus::Path as DBusPath;
@@ -21,11 +22,62 @@ const PROPERTIES_INTERFACE: &str = "org.freedesktop.DBus.Properties";
 const BATTERY_DEVICE_TYPE: u32 = 2;
 
 fn main() {
-    let debug = env::args().any(|arg| arg == "--debug");
-    if let Err(err) = run(debug) {
+    if let Err(err) = dispatch(env::args().skip(1)) {
         eprintln!("BatWatch: {err}");
         std::process::exit(1);
     }
+}
+
+fn dispatch(args: impl IntoIterator<Item = String>) -> Result<(), Box<dyn Error>> {
+    let mut debug = false;
+    let mut init_config = false;
+    let mut force = false;
+    let mut print_default_config = false;
+
+    for arg in args {
+        match arg.as_str() {
+            "--debug" => debug = true,
+            "--init-config" => init_config = true,
+            "--force" => force = true,
+            "--print-default-config" => print_default_config = true,
+            "-h" | "--help" => {
+                print_help();
+                return Ok(());
+            }
+            unknown => return Err(format!("unsupported argument `{unknown}`").into()),
+        }
+    }
+
+    if print_default_config {
+        print!("{}", support_files::default_config());
+        return Ok(());
+    }
+
+    if init_config {
+        let report = support_files::install(force)?;
+        println!(
+            "BatWatch: installed support files under {}",
+            report.config_dir.display()
+        );
+        if !report.written.is_empty() {
+            println!("BatWatch: wrote {} file(s)", report.written.len());
+        }
+        if !report.skipped.is_empty() {
+            println!(
+                "BatWatch: skipped {} existing file(s); pass --force to overwrite",
+                report.skipped.len()
+            );
+        }
+        return Ok(());
+    }
+
+    run(debug)
+}
+
+fn print_help() {
+    println!(
+        "BatWatch\n\nUsage:\n  batwatch [--debug]\n  batwatch --init-config [--force]\n  batwatch --print-default-config\n\nOptions:\n  --debug                 Print effective config before monitoring\n  --init-config           Write bundled config, scripts, icons, and user service\n  --force                 Overwrite files during --init-config\n  --print-default-config  Print the bundled default config\n  -h, --help              Show this help"
+    );
 }
 
 fn run(debug: bool) -> Result<(), Box<dyn Error>> {

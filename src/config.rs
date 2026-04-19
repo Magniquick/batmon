@@ -12,7 +12,7 @@ pub const DEFAULT_POLL_INTERVAL_SECS: u64 = 5;
 pub const DEFAULT_PROXY_TIMEOUT_SECS: u64 = 5;
 pub const MIN_POLL_INTERVAL_SECS: u64 = 1;
 pub const MIN_PROXY_TIMEOUT_SECS: u64 = 1;
-const DEFAULT_CONFIG_FILENAME: &str = "batwatch.toml";
+pub const DEFAULT_CONFIG_FILENAME: &str = "batwatch.toml";
 const CONFIG_ENV_VAR: &str = "BATWATCH_CONFIG";
 
 #[derive(Debug, Deserialize, Default)]
@@ -231,14 +231,19 @@ fn config_search_paths() -> Vec<PathBuf> {
         candidates.push(PathBuf::from(value));
     }
 
-    if let Some(mut dir) = config_dir() {
-        let mut nested = dir.clone();
-        nested.push("batwatch");
-        nested.push(DEFAULT_CONFIG_FILENAME);
+    if let Some(nested) = default_config_path() {
         candidates.push(nested);
+    }
 
+    if let Some(mut dir) = config_dir() {
         dir.push(DEFAULT_CONFIG_FILENAME);
         candidates.push(dir);
+    }
+
+    if let Ok(mut exe) = env::current_exe() {
+        exe.pop();
+        exe.push(DEFAULT_CONFIG_FILENAME);
+        candidates.push(exe);
     }
 
     if let Ok(mut current) = env::current_dir() {
@@ -247,4 +252,16 @@ fn config_search_paths() -> Vec<PathBuf> {
     }
 
     candidates
+}
+
+pub fn default_config_dir() -> Option<PathBuf> {
+    let mut dir = config_dir()?;
+    dir.push("batwatch");
+    Some(dir)
+}
+
+pub fn default_config_path() -> Option<PathBuf> {
+    let mut path = default_config_dir()?;
+    path.push(DEFAULT_CONFIG_FILENAME);
+    Some(path)
 }

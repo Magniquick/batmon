@@ -37,7 +37,13 @@ To install the BatWatch binary into your Cargo bin directory (`$HOME/.cargo/bin`
 cargo install --path .
 ```
 
-Ensure that directory is on your `PATH`, then run `batwatch -- --debug` to confirm the binary works. You can keep a repo-local config for development and copy it to `~/.config/batwatch/batwatch.toml` for daily use.
+Ensure that directory is on your `PATH`, then bootstrap the bundled config, hook scripts, icons, and user service:
+
+```
+batwatch --init-config
+```
+
+Run `batwatch --debug` to confirm the binary works. The installed binary embeds the default `batwatch.toml`, hook scripts, notification icons, and `batwatch.service`, so `cargo install --path .` and `cargo install --git ...` do not need the source tree at runtime. Re-run `batwatch --init-config --force` after upgrading if you want to overwrite your local copies with the bundled defaults.
 
 ### Default Hooks
 
