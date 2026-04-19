@@ -48,6 +48,7 @@ if [ -f "$SERVICE_FILE" ]; then
 fi
 
 systemctl --user daemon-reload
-systemctl --user enable --now batwatch.service
+systemctl --user enable batwatch.service
+systemctl --user restart batwatch.service
 
 echo "BatWatch: installed, configured, and started."
