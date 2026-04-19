@@ -29,12 +29,26 @@ scripts/install-icons.sh
 
 The script copies `batwatch.svg` and `batwatch-symbolic.svg` into `~/.local/share/icons/hicolor/scalable/apps/` and refreshes the cache. Notifications default to the symbolic name `batwatch-symbolic`; override via `BATWATCH_ICON` if you prefer another icon.
 
+### One-command Install
+
+Install BatWatch from GitHub, write the bundled config/scripts/icons/service, and enable the user service:
+
+```
+curl -fsSL https://raw.githubusercontent.com/Magniquick/batmon/main/scripts/install.sh | sh
+```
+
+Set `BATWATCH_INSTALL_REF` to pin a commit:
+
+```
+curl -fsSL https://raw.githubusercontent.com/Magniquick/batmon/main/scripts/install.sh | env BATWATCH_INSTALL_REF=b641fd0 sh
+```
+
 ### Install via Cargo
 
 To install the BatWatch binary into your Cargo bin directory (`$HOME/.cargo/bin` by default):
 
 ```
-cargo install --path .
+cargo install --git https://github.com/Magniquick/batmon.git --force
 ```
 
 Ensure that directory is on your `PATH`, then bootstrap the bundled config, hook scripts, icons, and user service:
