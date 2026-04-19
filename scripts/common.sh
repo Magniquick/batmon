@@ -50,5 +50,5 @@ batwatch_notify() {
   local message="$3"
   local urgency="${4:-normal}"
   local icon="$(resolve_icon)"
-  notify-send --icon "$icon" --replace-id "$DEFAULT_NOTIFY_ID" --urgency "$urgency" "BatWatch" "$message" 2>/dev/null || echo "$message"
+  notify-send --app-name "BatWatch" --icon "$icon" --replace-id "$DEFAULT_NOTIFY_ID" --urgency "$urgency" "BatWatch" "$message" 2>/dev/null || echo "$message"
 }
